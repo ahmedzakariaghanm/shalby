@@ -145,15 +145,21 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # بدء تشغيل البوت
 def start_bot():
-    app = ApplicationBuilder().token(TOKEN).build()
+    try:
+        app = ApplicationBuilder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", welcome_user))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
+        # إضافة الأوامر وإعدادات الاستجابة
+        app.add_handler(CommandHandler('start', welcome_user))
+        app.add_handler(CallbackQueryHandler(button_handler))
+        app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_note_handler))
 
-    print("Bot is running...")
-    app.run_polling()
+        print("Bot is running...")
+        app.run_polling(drop_pending_updates=True)  # استخدام polling مع التحقق من التعارض
+
+    except Exception as e:
+        print(f"Error starting the bot: {e}")
 
 if __name__ == "__main__":
     start_bot()
+

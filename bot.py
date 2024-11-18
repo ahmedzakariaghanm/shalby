@@ -164,6 +164,10 @@ async def start_bot():
     finally:
         await app.stop()  # تأكد من أنك تستخدم await هنا
 
+import asyncio
+
+# Entry point of the script
 if __name__ == "__main__":
-    start_bot()
+    asyncio.run(start_bot())  # Use asyncio.run to execute the async start_bot function
+
 

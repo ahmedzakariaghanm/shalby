@@ -143,7 +143,7 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.message.reply_text
     print("ask_more_handler")
-    print(update.message.reply_text.text)
+    print(update.message.text)
     # print(query)
     # print(query.data)
     # if query.data == "yes_more":

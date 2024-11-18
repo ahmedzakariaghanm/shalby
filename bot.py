@@ -74,6 +74,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # تنظيف بيانات المستخدم
         user_data.pop(chat_id, None)
 
+        # بعد الانتهاء، اسأل المستخدم إذا كان يحتاج إلى شيء آخر
+        await query.edit_message_text("هل تحتاج إلى شيء آخر؟ اختر من الخيارات التالية:")
+        await show_options(update, context)
+
 # دالة لإرسال رسالة ترحيب للمستخدم عند فتح الشات
 async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
@@ -89,15 +93,27 @@ async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data[chat_id] = {'last_message': 'welcome'}
 
         # عرض الخيارات للمستخدم
-        options_keyboard = [
-            [InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")],
-            [InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="show_notes")],
-            [InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")],
-            [InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")]
-        ]
+        await show_options(update, context)
 
-        reply_markup = InlineKeyboardMarkup(options_keyboard)
-        await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
+# دالة لعرض الاختيارات
+async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
+
+    options_keyboard = [
+        [InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")],
+        [InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")]
+    ]
+
+    # إذا كان لدى المستخدم ملاحظات سابقة
+    if 'notes' in user_data.get(chat_id, {}):
+        options_keyboard.insert(1, [InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="show_notes")])
+
+    # إذا كان لدى المستخدم تذكيرات سابقة
+    if chat_id in reminders:
+        options_keyboard.append([InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")])
+
+    reply_markup = InlineKeyboardMarkup(options_keyboard)
+    await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
 
 # التعامل مع الردود من الأزرار التفاعلية الخاصة بالخيار
 async def options_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):

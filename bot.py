@@ -145,10 +145,9 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
 
 # بدء تشغيل البوت
-def start_bot():
+async def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
-        app.stop()
 
         # إضافة الأوامر وإعدادات الاستجابة
         app.add_handler(CommandHandler('start', welcome_user))
@@ -162,6 +161,8 @@ def start_bot():
 
     except Exception as e:
         print(f"Error starting the bot: {e}")
+    finally:
+        await app.stop()  # تأكد من أنك تستخدم await هنا
 
 if __name__ == "__main__":
     start_bot()

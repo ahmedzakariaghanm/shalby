@@ -161,10 +161,6 @@ async def start_bot():
         # Start polling for updates
         await app.run_polling(drop_pending_updates=True)
 
-    except Exception as e:
-        # Print the exception for debugging
-        print(f"Error starting the bot: {e}")
-
     finally:
         # Properly shut down the bot
         if app.running:

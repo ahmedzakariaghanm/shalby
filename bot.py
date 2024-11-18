@@ -40,18 +40,50 @@ async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
 
+# التعامل مع الأزرار التي يضغط عليها المستخدم
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # استخدام callback_query بدلاً من message عند الضغط على الزر
+    query = update.callback_query
+    chat_id = query.message.chat.id  # استخدم chat.id لأننا نتعامل مع callback_query هنا
+
+    if query.data == "add_note":
+        # بداية إضافة ملاحظة جديدة
+        user_data[chat_id]["adding_note"] = True
+        await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
+
+    elif query.data == "show_notes":
+        # عرض الملاحظات السابقة
+        await show_notes_handler(update, context)
+
+    elif query.data == "add_reminder":
+        # بداية إضافة تذكير جديد
+        await start_reminder(query.message, context, chat_id)
+
+    elif query.data == "show_reminders":
+        # عرض التذكيرات السابقة
+        if chat_id in reminders:
+            reminder = reminders[chat_id]
+            await query.edit_message_text(f"التذكير: {reminder['description']} في {reminder['time']}")
+        else:
+            await query.edit_message_text("لا توجد تذكيرات سابقة.")
+        await ask_for_more(query, context)
+
 # دالة استقبال نص الملاحظة وحفظها
 async def save_note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
-    # تحقق إذا كان المستخدم في وضع إضافة ملاحظة
+    # التأكد من أننا في وضع إضافة ملاحظة
+    chat_id = update.message.chat.id  # استخدم chat.id لأننا نتعامل مع الرسائل هنا
+
     if user_data.get(chat_id, {}).get("adding_note"):
-        note = update.message.text
+        note = update.message.text  # النص المرسل من المستخدم
+        # إضافة الملاحظة للمستخدم
         user_data[chat_id]["notes"].append(note)
+        # إيقاف وضع إضافة الملاحظة
         user_data[chat_id]["adding_note"] = False
         await update.message.reply_text("تم حفظ الملاحظة بنجاح.")
         await ask_for_more(update, context)
     else:
         await update.message.reply_text("أنت لست في وضع إضافة ملاحظة حاليًا.")
+
 
 
 # عرض جميع الملاحظات
@@ -80,33 +112,6 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
 
-# التعامل مع الزر الخاص بإضافة التذكير
-# التعامل مع الزر الخاص بإضافة التذكير
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    chat_id = query.message.chat_id
-
-    if query.data == "add_note":
-        # بداية إضافة ملاحظة جديدة
-        user_data[chat_id]["adding_note"] = True
-        await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
-
-    elif query.data == "show_notes":
-        # عرض الملاحظات السابقة
-        await show_notes_handler(update, context)
-
-    elif query.data == "add_reminder":
-        # بداية إضافة تذكير جديد
-        await start_reminder(query.message, context, chat_id)
-
-    elif query.data == "show_reminders":
-        # عرض التذكيرات السابقة
-        if chat_id in reminders:
-            reminder = reminders[chat_id]
-            await query.edit_message_text(f"التذكير: {reminder['description']} في {reminder['time']}")
-        else:
-            await query.edit_message_text("لا توجد تذكيرات سابقة.")
-        await ask_for_more(query, context)
 # دالة بدء إضافة ملاحظة جديدة
 async def add_note_handler(message, context: ContextTypes.DEFAULT_TYPE):
     chat_id = message.chat_id  # استخدام message هنا لأنك تحصل على رسالة من query

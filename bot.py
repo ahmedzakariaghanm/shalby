@@ -148,6 +148,7 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
+        app.stop()
 
         # إضافة الأوامر وإعدادات الاستجابة
         app.add_handler(CommandHandler('start', welcome_user))

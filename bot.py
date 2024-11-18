@@ -14,6 +14,30 @@ TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 reminders = {}
 user_data = {}
 
+# دالة لإرسال رسالة ترحيبية للمستخدم عندما يرسل أي رسالة لأول مرة
+async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
+    if chat_id not in user_data:  # إذا كان المستخدم جديد
+        user_data[chat_id] = {}
+
+        # إرسال رسالة ترحيبية
+        welcome_text = (
+            "مرحبًا بك في بوت التذكيرات! 🎉\n\n"
+            "سأساعدك في إضافة تذكير جديد. في البداية، سأطلب منك اختيار التاريخ والوقت.\n"
+            "الآن، دعني أعرف التاريخ الذي ترغب في إضافة التذكير فيه."
+        )
+        await update.message.reply_text(welcome_text)
+
+        # عرض الأزرار لاختيار التاريخ
+        keyboard = []
+        today = datetime.now()
+        for i in range(7):  # عرض الأيام السبعة القادمة
+            day = today + timedelta(days=i)
+            keyboard.append([InlineKeyboardButton(day.strftime("%Y-%m-%d"), callback_data=f"date:{day.strftime('%Y-%m-%d')}")])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+
 # دالة لبدء إضافة تذكير
 async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
@@ -63,43 +87,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # طلب من المستخدم كتابة الملاحظة
         await query.edit_message_text("الآن، يرجى كتابة وصف التذكير (مثل: موعد مع الطبيب)")
 
-# التعامل مع الرسائل النصية
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
-    text = update.message.text
-
-    if chat_id not in user_data or 'date' not in user_data[chat_id]:
-        user_data[chat_id] = {}
-        await update.message.reply_text(
-            "مرحبًا بك! أنا بوت التذكيرات الخاص بك. 😊\n"
-            "أرسل أي أمر وسأساعدك في تنظيم يومك.\n"
-            "على سبيل المثال، أرسل 'تذكير' لبدء إضافة تذكير جديد."
-        )
-        return
-
-    # إذا كان المستخدم في مرحلة كتابة الوصف
-    if 'time' in user_data[chat_id]:
+    elif query.message.text and chat_id in user_data and 'time' in user_data[chat_id]:
         # حفظ التذكير بعد كتابة الوصف
-        description = text
+        description = query.message.text
         date_time_str = f"{user_data[chat_id]['date']} {user_data[chat_id]['time']}"
         reminder_time = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
 
         # حفظ التذكير في القائمة
         reminders[chat_id] = {"time": reminder_time, "description": description}
-        await update.message.reply_text(f"تم إضافة التذكير: {description} في {reminder_time}")
+        await query.edit_message_text(f"تم إضافة التذكير: {description} في {reminder_time}")
 
         # تنظيف بيانات المستخدم
         user_data.pop(chat_id, None)
-    else:
-        await update.message.reply_text("يرجى استخدام الأزرار لاختيار التاريخ والوقت أولاً.")
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
 
+    # إضافة MessageHandler لالتقاط الرسائل النصية من المستخدم
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, welcome_message))
+
     # أوامر وإعدادات
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(CommandHandler("start", start_reminder))
 
     print("Bot is running...")
     app.run_polling()

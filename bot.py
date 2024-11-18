@@ -141,6 +141,10 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    print("ask_more_handler")
+    print(update)
+    print(query)
+    print(query.data)
     if query.data == "yes_more":
         # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
         print("تم اختيار 'نعم'، سيتم عرض الخيارات")

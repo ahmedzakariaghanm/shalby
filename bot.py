@@ -119,10 +119,9 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
 
 # دالة بدء إضافة ملاحظة جديدة
 async def add_note_handler(message, context: ContextTypes.DEFAULT_TYPE):
-    print(message)
     chat_id = message.message.chat.id  # استخدام message هنا لأنك تحصل على رسالة من query
     user_data[chat_id]["adding_note"] = True
-    await message.reply_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
+    await message.message.reply_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
 
 # استفسار عن طلب إضافي
 async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import asyncio
 
 # تحميل المتغيرات البيئية من ملف .env
 load_dotenv()
@@ -144,27 +145,27 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "no_more":
         await query.edit_message_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
 
-# بدء تشغيل البوت
 async def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
 
-        # إضافة الأوامر وإعدادات الاستجابة
+        # Start the bot
+        await app.initialize()  # Ensure initialization is awaited
+
+        # Add handlers and start the bot
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
         app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
 
         print("Bot is running...")
-        await app.run_polling(drop_pending_updates=True)  # استخدم await هنا مع run_polling إذا كنت بحاجة إلى الانتظار لنتائج البوت
+        await app.run_polling(drop_pending_updates=True)  # Await the polling
 
     except Exception as e:
         print(f"Error starting the bot: {e}")
 
     finally:
-        await app.stop()  # تأكد من أنك تستخدم await هنا
-
-import asyncio
+        await app.shutdown()  # Ensure shutdown is awaited when stopping the bot
 
 # Entry point of the script
 if __name__ == "__main__":

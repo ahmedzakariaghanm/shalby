@@ -1,6 +1,6 @@
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -10,7 +10,7 @@ load_dotenv()
 # الحصول على التوكن من المتغيرات البيئية
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# قائمة لتخزين التذكيرات
+# قائمة لتخزين التذكيرات والملاحظات
 reminders = {}
 user_data = {}
 
@@ -18,12 +18,6 @@ user_data = {}
 async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     user_data[chat_id] = {}
-
-    # إرسال رسالة ترحيبية وشرح كيف يعمل البوت
-    welcome_message = f"مرحبًا بك {update.message.from_user.first_name} في بوت التذكيرات! 🎉\n\n" \
-                      "سأساعدك في إضافة تذكير جديد. في البداية، سأطلب منك اختيار التاريخ والوقت.\n" \
-                      "الآن، دعني أعرف التاريخ الذي ترغب في إضافة التذكير فيه."
-    await update.message.reply_text(welcome_message)
 
     # عرض الأزرار لاختيار التاريخ
     keyboard = []
@@ -58,25 +52,67 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         selected_time = query.data.split(":")[1]
         user_data[chat_id]['time'] = selected_time
 
-        # طلب من المستخدم كتابة الملاحظة
+        # طلب من المستخدم كتابة وصف التذكير
         await query.edit_message_text("الآن، يرجى كتابة وصف التذكير (مثل: موعد مع الطبيب)")
 
-    elif query.message.text and chat_id in user_data and 'time' in user_data[chat_id]:
-        # حفظ التذكير بعد كتابة الوصف
-        description = query.message.text
-        date_time_str = f"{user_data[chat_id]['date']} {user_data[chat_id]['time']}"
-        reminder_time = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
+    elif query.data == "add_note":
+        # طلب من المستخدم إرسال نص الملاحظة
+        await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
+        user_data[chat_id] = {"adding_note": True}
 
-        # حفظ التذكير في القائمة
-        reminders[chat_id] = {"time": reminder_time, "description": description}
-        await query.edit_message_text(f"تم إضافة التذكير: {description} في {reminder_time}")
+    elif query.data == "show_notes":
+        # عرض الملاحظات السابقة
+        notes = user_data.get(chat_id, {}).get("notes", [])
+        if notes:
+            await query.edit_message_text(f"الملاحظات السابقة: {', '.join(notes)}")
+        else:
+            await query.edit_message_text("لا توجد ملاحظات سابقة.")
+        await ask_for_more(update, context)
 
-        # تنظيف بيانات المستخدم
-        user_data.pop(chat_id, None)
+    elif query.data == "show_reminders":
+        # عرض التذكيرات السابقة
+        if chat_id in reminders:
+            reminder = reminders[chat_id]
+            await query.edit_message_text(f"التذكير: {reminder['description']} في {reminder['time']}")
+        else:
+            await query.edit_message_text("لا توجد تذكيرات سابقة.")
+        await ask_for_more(update, context)
 
-        # بعد الانتهاء، اسأل المستخدم إذا كان يحتاج إلى شيء آخر
-        await query.edit_message_text("هل تحتاج إلى شيء آخر؟ اختر من الخيارات التالية:")
-        await show_options(update, context)
+# استقبال الرسائل النصية من المستخدم
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
+    text = update.message.text
+
+    if chat_id in user_data and user_data[chat_id].get("adding_note"):
+        # إضافة الملاحظة إلى القائمة
+        notes = user_data[chat_id].get("notes", [])
+        notes.append(text)
+        user_data[chat_id]["notes"] = notes
+
+        # تأكيد الإضافة للمستخدم
+        await update.message.reply_text(f"تم حفظ الملاحظة: {text}")
+        user_data[chat_id]["adding_note"] = False
+
+        # سؤال المستخدم إذا كان يحتاج إلى شيء آخر
+        await ask_for_more(update, context)
+
+# عرض الخيارات مرة أخرى
+async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")],
+        [InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")]
+    ]
+
+    chat_id = update.message.chat_id if update.message else update.callback_query.message.chat_id
+
+    # إضافة خيارات عرض الملاحظات والتذكيرات إن وجدت
+    if 'notes' in user_data.get(chat_id, {}):
+        keyboard.insert(1, [InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="show_notes")])
+    if chat_id in reminders:
+        keyboard.append([InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id, "هل تحتاج إلى شيء آخر؟", reply_markup=reply_markup)
 
 # دالة لإرسال رسالة ترحيب للمستخدم عند فتح الشات
 async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -85,61 +121,14 @@ async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # التحقق مما إذا كانت آخر رسالة للمستخدم هي رسالة ترحيب باستخدام المتغيرات المخزنة
     if chat_id not in user_data or user_data[chat_id].get('last_message', '') != 'welcome':
         welcome_message = f"مرحبًا بك {update.message.from_user.first_name} في بوت التذكيرات! 🎉\n\n" \
-                          "سأساعدك في إضافة تذكير جديد. في البداية، سأطلب منك اختيار التاريخ والوقت.\n" \
-                          "الآن، دعني أعرف التاريخ الذي ترغب في إضافة التذكير فيه."
+                          "سأساعدك في إضافة تذكير أو ملاحظة جديدة.\n"
         await update.message.reply_text(welcome_message)
 
         # تخزين حالة الرسالة الترحيبية
         user_data[chat_id] = {'last_message': 'welcome'}
 
         # عرض الخيارات للمستخدم
-        await show_options(update, context)
-
-# دالة لعرض الاختيارات
-async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
-
-    options_keyboard = [
-        [InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")],
-        [InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")]
-    ]
-
-    # إذا كان لدى المستخدم ملاحظات سابقة
-    if 'notes' in user_data.get(chat_id, {}):
-        options_keyboard.insert(1, [InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="show_notes")])
-
-    # إذا كان لدى المستخدم تذكيرات سابقة
-    if chat_id in reminders:
-        options_keyboard.append([InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")])
-
-    reply_markup = InlineKeyboardMarkup(options_keyboard)
-    await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
-
-# التعامل مع الردود من الأزرار التفاعلية الخاصة بالخيار
-async def options_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    chat_id = query.message.chat_id
-
-    if query.data == "add_note":
-        # معالجة إضافة ملاحظة جديدة
-        await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
-    elif query.data == "show_notes":
-        # عرض الملاحظات السابقة
-        notes = user_data.get(chat_id, {}).get("notes", [])
-        if notes:
-            await query.edit_message_text(f"الملاحظات السابقة: {', '.join(notes)}")
-        else:
-            await query.edit_message_text("لا توجد ملاحظات سابقة.")
-    elif query.data == "add_reminder":
-        # بدء عملية إضافة تذكير
-        await start_reminder(update, context)
-    elif query.data == "show_reminders":
-        # عرض التذكيرات السابقة
-        if chat_id in reminders:
-            reminder = reminders[chat_id]
-            await query.edit_message_text(f"التذكير: {reminder['description']} في {reminder['time']}")
-        else:
-            await query.edit_message_text("لا توجد تذكيرات سابقة.")
+        await ask_for_more(update, context)
 
 # دالة تبدأ البوت وتفحص حالة التشغيل
 def start_bot():
@@ -148,7 +137,8 @@ def start_bot():
 
         # إضافة الأوامر وإعدادات الاستجابة
         app.add_handler(CommandHandler('start', welcome_user))
-        app.add_handler(CallbackQueryHandler(options_handler))
+        app.add_handler(CallbackQueryHandler(button_handler))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
 
         print("Bot is running...")
         app.run_polling(drop_pending_updates=True)  # استخدام polling مع التحقق من التعارض

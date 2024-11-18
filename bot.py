@@ -79,6 +79,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # دالة استقبال نص الملاحظة وحفظها
 async def save_note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("save_note_handler")
     if update.message:
         chat_id = update.message.chat.id  # استخدم chat.id لأننا نتعامل مع الرسائل هنا
 
@@ -137,7 +138,7 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
-
+    await ask_more_handler(update,context)
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query

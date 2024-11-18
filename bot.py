@@ -105,10 +105,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await show_notes_handler(update, context)
 
     elif query.data == "add_note":
-        await add_note_handler(update.callback_query.message, context)
+        await add_note_handler(query.message, context)
 
     elif query.data == "add_reminder":
-        await start_reminder(update.callback_query.message, context, chat_id)
+        await start_reminder(query.message, context, chat_id)
 
     elif query.data == "show_reminders":
         if chat_id in reminders:

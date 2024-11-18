@@ -27,6 +27,7 @@ async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # عرض الخيارات المتاحة للمستخدم
 async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("عرض الخيارات للمستخدم...")
     chat_id = update.message.chat_id
 
     keyboard = []
@@ -136,6 +137,9 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if query.data == "yes_more":
+        # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
+        print("تم اختيار 'نعم'، سيتم عرض الخيارات")
+        # بعد الضغط على "نعم"، يتم عرض الخيارات مرة أخرى
         await show_options(query.message, context)
     elif query.data == "no_more":
         await query.edit_message_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")

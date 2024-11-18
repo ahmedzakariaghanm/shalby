@@ -149,7 +149,7 @@ def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
 
-        app.initialize()
+        # app.initialize()
 
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))

@@ -78,13 +78,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
 
-    # التحقق مما إذا كانت آخر رسالة ليست رسالة ترحيبية
-    last_message = await context.bot.get_chat_history(chat_id, limit=1)
-    if last_message and last_message[0].text != "مرحبًا بك في بوت التذكيرات! 🎉":
+    # التحقق مما إذا كانت آخر رسالة للمستخدم هي رسالة ترحيب باستخدام المتغيرات المخزنة
+    if chat_id not in user_data or user_data[chat_id].get('last_message', '') != 'welcome':
         welcome_message = f"مرحبًا بك {update.message.from_user.first_name} في بوت التذكيرات! 🎉\n\n" \
                           "سأساعدك في إضافة تذكير جديد. في البداية، سأطلب منك اختيار التاريخ والوقت.\n" \
                           "الآن، دعني أعرف التاريخ الذي ترغب في إضافة التذكير فيه."
         await update.message.reply_text(welcome_message)
+
+        # تخزين حالة الرسالة الترحيبية
+        user_data[chat_id]['last_message'] = 'welcome'
 
         # عرض الخيارات للمستخدم
         options_keyboard = [

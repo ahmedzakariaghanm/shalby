@@ -149,7 +149,7 @@ def start_bot():
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
-        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_note_handler))
+        # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_note_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
 
         print("Bot is running...")

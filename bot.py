@@ -115,12 +115,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await ask_for_more(query, context)
 
 # دالة بدء إضافة ملاحظة جديدة
-async def add_note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message:  # التأكد من أن update يحتوي على message
-        chat_id = update.message.chat_id  # استخدام update.message هنا
-        user_data[chat_id]["adding_note"] = True
-        await update.message.reply_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
-
+async def add_note_handler(message, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = message.chat_id  # استخدام message هنا لأنك تحصل على رسالة من query
+    user_data[chat_id]["adding_note"] = True
+    await message.reply_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
 
 # استفسار عن طلب إضافي
 async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -15,8 +15,10 @@ reminders = {}
 user_data = {}
 
 # دالة لبدء إضافة تذكير
-async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
+async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
+    if chat_id is None:
+        chat_id = update.message.chat_id
+
     user_data[chat_id] = {}
 
     # عرض الأزرار لاختيار التاريخ
@@ -27,7 +29,7 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append([InlineKeyboardButton(day.strftime("%Y-%m-%d"), callback_data=f"date:{day.strftime('%Y-%m-%d')}")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+    await context.bot.send_message(chat_id, "اختر التاريخ:", reply_markup=reply_markup)
 
 # التعامل مع الردود من الأزرار التفاعلية
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -60,11 +62,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
         user_data[chat_id] = {"adding_note": True}
 
+    elif query.data == "add_reminder":
+        # بدء عملية إضافة تذكير
+        await start_reminder(update, context, chat_id)
+
     elif query.data == "show_notes":
         # عرض الملاحظات السابقة
         notes = user_data.get(chat_id, {}).get("notes", [])
         if notes:
-            await query.edit_message_text(f"الملاحظات السابقة: {', '.join(notes)}")
+            notes_text = "\n".join(f"- {note}" for note in notes)
+            await query.edit_message_text(f"الملاحظات السابقة:\n{notes_text}")
         else:
             await query.edit_message_text("لا توجد ملاحظات سابقة.")
         await ask_for_more(update, context)

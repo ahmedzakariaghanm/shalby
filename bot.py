@@ -26,10 +26,11 @@ async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await show_options(update, context)
 
-# عرض الخيارات المتاحة للمستخدم
 async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("عرض الخيارات للمستخدم...")
-    chat_id = update.message.chat_id
+    chat_id = (
+        update.message.chat_id if update.message
+        else update.callback_query.message.chat.id
+    )
 
     keyboard = []
     keyboard.append([InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")])
@@ -40,7 +41,10 @@ async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append([InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
+    if update.message:
+        await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
+    else:
+        await update.callback_query.edit_message_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
 
 # التعامل مع الأزرار التي يضغط عليها المستخدم
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -141,7 +145,8 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
         print("تم اختيار 'نعم'، سيتم عرض الخيارات")
         # بعد الضغط على "نعم"، يتم عرض الخيارات مرة أخرى
-        await show_options(query.message, context)
+        await query.answer()  # للتأكيد على الرد
+        await show_options(query, context)  # تمرير query بدلاً من message
     elif query.data == "no_more":
         await query.edit_message_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
 

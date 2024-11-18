@@ -145,11 +145,11 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "no_more":
         await query.edit_message_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
 
-async def start_bot():
+def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
 
-        await app.initialize()
+        app.initialize()
 
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
@@ -159,21 +159,11 @@ async def start_bot():
         print("Bot is running...")
 
         # Start polling for updates
-        await app.run_polling(drop_pending_updates=True)
+        app.run_polling(drop_pending_updates=True)
 
     except Exception as e:
         # Print the exception for debugging
-        if app.running:
-            await app.stop()  # Stops polling if still running
-        await app.shutdown()  # Cleans up resources
-        await app.initialize() 
-    finally:
-        # Properly shut down the bot
-        if app.running:
-            await app.stop()  # Stops polling if still running
-        await app.shutdown()  # Cleans up resources
-        await app.initialize()  # Ensures re-initialization in the future if necessary
+        print(e)
 
 if __name__ == "__main__":
-    # Use asyncio to run the bot safely
-    asyncio.run(start_bot())
+    start_bot()

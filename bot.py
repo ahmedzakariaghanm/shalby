@@ -149,26 +149,29 @@ async def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
 
-        # Start the bot
-        await app.initialize()  # Ensure initialization is awaited
+        await app.initialize()
 
-        # Add handlers and start the bot
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
         app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
 
         print("Bot is running...")
-        await app.run_polling(drop_pending_updates=True)  # Await the polling
+
+        # Start polling for updates
+        await app.run_polling(drop_pending_updates=True)
 
     except Exception as e:
+        # Print the exception for debugging
         print(f"Error starting the bot: {e}")
 
     finally:
-        await app.shutdown()  # Ensure shutdown is awaited when stopping the bot
+        # Properly shut down the bot
+        if app.running:
+            await app.stop()  # Stops polling if still running
+        await app.shutdown()  # Cleans up resources
+        await app.initialize()  # Ensures re-initialization in the future if necessary
 
-# Entry point of the script
 if __name__ == "__main__":
-    asyncio.run(start_bot())  # Use asyncio.run to execute the async start_bot function
-
-
+    # Use asyncio to run the bot safely
+    asyncio.run(start_bot())

@@ -10,136 +10,133 @@ load_dotenv()
 # الحصول على التوكن من المتغيرات البيئية
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# قائمة لتخزين التذكيرات والملاحظات
+# قائمة لتخزين التذكيرات
 reminders = {}
-notes = {}
 user_data = {}
 
-# قائمة لتخزين آخر رسالة مرسلة لكل مستخدم
-last_message = {}
-
-# دالة لبدء التفاعل مع البوت (رسالة ترحيب)
-async def send_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# دالة لبدء إضافة تذكير
+async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
-    user_name = update.message.from_user.first_name
+    user_data[chat_id] = {}
 
-    # التحقق إذا كانت آخر رسالة هي رسالة ترحيب
-    if chat_id in last_message and last_message[chat_id] == 'welcome':
-        return  # لا تفعل شيئًا إذا كانت آخر رسالة ترحيب
-
-    # إرسال رسالة ترحيب جديدة
-    welcome_message = f"مرحبًا {user_name}! 🎉\nأنا هنا لمساعدتك. ماذا تحتاج؟"
+    # إرسال رسالة ترحيبية وشرح كيف يعمل البوت
+    welcome_message = f"مرحبًا بك {update.message.from_user.first_name} في بوت التذكيرات! 🎉\n\n" \
+                      "سأساعدك في إضافة تذكير جديد. في البداية، سأطلب منك اختيار التاريخ والوقت.\n" \
+                      "الآن، دعني أعرف التاريخ الذي ترغب في إضافة التذكير فيه."
     await update.message.reply_text(welcome_message)
 
-    # تخزين نوع الرسالة المرسلة (ترحيب)
-    last_message[chat_id] = 'welcome'
-
-    # عرض الاختيارات للمستخدم
-    keyboard = [
-        [InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")],
-        [InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="view_notes")],
-        [InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")],
-        [InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="view_reminders")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("اختار ما تريد:", reply_markup=reply_markup)
-
-# دالة لإضافة ملاحظة جديدة
-async def add_note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.callback_query.message.chat_id
-    await update.callback_query.edit_message_text("يرجى كتابة الملاحظة الآن.")
-    user_data[chat_id] = {'action': 'add_note'}
-
-# دالة لعرض الملاحظات السابقة
-async def view_notes_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.callback_query.message.chat_id
-    if chat_id in notes and notes[chat_id]:
-        notes_message = "\n".join(notes[chat_id])
-    else:
-        notes_message = "لا توجد ملاحظات سابقة."
-    await update.callback_query.edit_message_text(f"الملاحظات السابقة:\n{notes_message}")
-
-# دالة لإضافة تذكير جديد
-async def add_reminder_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.callback_query.message.chat_id
-    user_data[chat_id] = {'action': 'add_reminder'}
-
-    # طلب التاريخ
+    # عرض الأزرار لاختيار التاريخ
+    keyboard = []
     today = datetime.now()
-    keyboard = [
-        [InlineKeyboardButton((today + timedelta(days=i)).strftime("%Y-%m-%d"), callback_data=f"date:{(today + timedelta(days=i)).strftime('%Y-%m-%d')}")] for i in range(7)
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text("اختر التاريخ:", reply_markup=reply_markup)
+    for i in range(7):  # عرض الأيام السبعة القادمة
+        day = today + timedelta(days=i)
+        keyboard.append([InlineKeyboardButton(day.strftime("%Y-%m-%d"), callback_data=f"date:{day.strftime('%Y-%m-%d')}")])
 
-# دالة لعرض التذكيرات السابقة
-async def view_reminders_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.callback_query.message.chat_id
-    if chat_id in reminders and reminders[chat_id]:
-        reminders_message = "\n".join([f"{reminder['description']} في {reminder['time']}" for reminder in reminders[chat_id]])
-    else:
-        reminders_message = "لا توجد تذكيرات سابقة."
-    await update.callback_query.edit_message_text(f"التذكيرات السابقة:\n{reminders_message}")
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
 
 # التعامل مع الردود من الأزرار التفاعلية
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     chat_id = query.message.chat_id
 
-    # التعامل مع اختيار التاريخ
     if query.data.startswith("date:"):
+        # تخزين التاريخ المختار
         selected_date = query.data.split(":")[1]
         user_data[chat_id]['date'] = selected_date
 
         # عرض أزرار لاختيار الوقت
-        keyboard = [InlineKeyboardButton(f"{hour}:00", callback_data=f"time:{hour}:00") for hour in range(9, 21)]
-        reply_markup = InlineKeyboardMarkup([keyboard])
+        keyboard = []
+        for hour in range(9, 21):  # ساعات العمل بين 9 صباحًا و9 مساءً
+            keyboard.append([InlineKeyboardButton(f"{hour}:00", callback_data=f"time:{hour}:00")])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text("اختر الوقت:", reply_markup=reply_markup)
 
-    # التعامل مع اختيار الوقت
     elif query.data.startswith("time:"):
+        # تخزين الوقت المختار
         selected_time = query.data.split(":")[1]
         user_data[chat_id]['time'] = selected_time
 
-        # طلب من المستخدم كتابة وصف التذكير
+        # طلب من المستخدم كتابة الملاحظة
         await query.edit_message_text("الآن، يرجى كتابة وصف التذكير (مثل: موعد مع الطبيب)")
 
-    # حفظ التذكير بعد كتابة الوصف
     elif query.message.text and chat_id in user_data and 'time' in user_data[chat_id]:
+        # حفظ التذكير بعد كتابة الوصف
         description = query.message.text
         date_time_str = f"{user_data[chat_id]['date']} {user_data[chat_id]['time']}"
         reminder_time = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
 
         # حفظ التذكير في القائمة
-        if chat_id not in reminders:
-            reminders[chat_id] = []
-        reminders[chat_id].append({"time": reminder_time, "description": description})
+        reminders[chat_id] = {"time": reminder_time, "description": description}
         await query.edit_message_text(f"تم إضافة التذكير: {description} في {reminder_time}")
 
         # تنظيف بيانات المستخدم
         user_data.pop(chat_id, None)
 
-    # حفظ الملاحظة
-    elif query.message.text and chat_id in user_data and user_data[chat_id]['action'] == 'add_note':
-        description = query.message.text
-        if chat_id not in notes:
-            notes[chat_id] = []
-        notes[chat_id].append(description)
-        await query.edit_message_text(f"تم إضافة الملاحظة: {description}")
-        user_data.pop(chat_id, None)
+# دالة لإرسال رسالة ترحيب للمستخدم عند فتح الشات
+async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
 
-# تشغيل البوت
+    # التحقق مما إذا كانت آخر رسالة ليست رسالة ترحيبية
+    last_message = await context.bot.get_chat_history(chat_id, limit=1)
+    if last_message and last_message[0].text != "مرحبًا بك في بوت التذكيرات! 🎉":
+        welcome_message = f"مرحبًا بك {update.message.from_user.first_name} في بوت التذكيرات! 🎉\n\n" \
+                          "سأساعدك في إضافة تذكير جديد. في البداية، سأطلب منك اختيار التاريخ والوقت.\n" \
+                          "الآن، دعني أعرف التاريخ الذي ترغب في إضافة التذكير فيه."
+        await update.message.reply_text(welcome_message)
+
+        # عرض الخيارات للمستخدم
+        options_keyboard = [
+            [InlineKeyboardButton("إضافة ملاحظة جديدة", callback_data="add_note")],
+            [InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="show_notes")],
+            [InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")],
+            [InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(options_keyboard)
+        await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
+
+# التعامل مع الردود من الأزرار التفاعلية الخاصة بالخيار
+async def options_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    chat_id = query.message.chat_id
+
+    if query.data == "add_note":
+        # معالجة إضافة ملاحظة جديدة
+        await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
+    elif query.data == "show_notes":
+        # عرض الملاحظات السابقة
+        notes = user_data.get(chat_id, {}).get("notes", [])
+        if notes:
+            await query.edit_message_text(f"الملاحظات السابقة: {', '.join(notes)}")
+        else:
+            await query.edit_message_text("لا توجد ملاحظات سابقة.")
+    elif query.data == "add_reminder":
+        # بدء عملية إضافة تذكير
+        await start_reminder(update, context)
+    elif query.data == "show_reminders":
+        # عرض التذكيرات السابقة
+        if chat_id in reminders:
+            reminder = reminders[chat_id]
+            await query.edit_message_text(f"التذكير: {reminder['description']} في {reminder['time']}")
+        else:
+            await query.edit_message_text("لا توجد تذكيرات سابقة.")
+
+# دالة تبدأ البوت وتفحص حالة التشغيل
+def start_bot():
+    try:
+        app = ApplicationBuilder().token(TOKEN).build()
+
+        # إضافة الأوامر وإعدادات الاستجابة
+        app.add_handler(CommandHandler('start', welcome_user))
+        app.add_handler(CallbackQueryHandler(options_handler))
+
+        print("Bot is running...")
+        app.run_polling(drop_pending_updates=True)  # استخدام polling مع التحقق من التعارض
+
+    except Exception as e:
+        print(f"Error starting the bot: {e}")
+
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
-
-    # إضافة أوامر وإعدادات البوت
-    app.add_handler(CommandHandler("start", send_welcome))
-    app.add_handler(CallbackQueryHandler(button_handler, pattern="^date:|^time:"))
-    app.add_handler(CallbackQueryHandler(add_note_handler, pattern="^add_note$"))
-    app.add_handler(CallbackQueryHandler(view_notes_handler, pattern="^view_notes$"))
-    app.add_handler(CallbackQueryHandler(add_reminder_handler, pattern="^add_reminder$"))
-    app.add_handler(CallbackQueryHandler(view_reminders_handler, pattern="^view_reminders$"))
-
-    # بدء تشغيل البوت
-    print("Bot is running...")
-    app.run_polling()
+    start_bot()

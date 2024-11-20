@@ -198,9 +198,5 @@ def start_bot():
 if __name__ == "__main__":
     start_bot()
 
-
-
-# Run the bot
-
 # Cleanup: remove lock file when the bot stops
 os.remove(LOCK_FILE)

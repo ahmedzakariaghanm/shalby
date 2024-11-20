@@ -144,14 +144,19 @@ async def show_notes_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.edit_message_text("لا توجد ملاحظات سابقة.")
     await ask_for_more(query, context)
 
-# بدء إضافة تذكير جديد
+from datetime import datetime, timedelta
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+
+# Store reminders
+reminder_data = {}
+
+# Step 1: Start reminder setup
 async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
     chat_id = chat_id or (update.message.chat_id if update.message else None)
     if not chat_id:
         print("Error: Chat ID is missing.")
         return
-
-    user_data[chat_id] = {}
 
     today = datetime.now()
     keyboard = [
@@ -159,10 +164,62 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
         for i in range(7)
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    if update.message:
-        await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
-    elif update.callback_query:
-        await update.callback_query.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+    await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+
+# Step 2: Handle date selection and prompt for hour
+async def handle_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    chat_id = query.message.chat.id
+
+    selected_date_offset = int(query.data.split(":")[1])
+    selected_date = datetime.now() + timedelta(days=selected_date_offset)
+    reminder_data[chat_id] = {"date": selected_date}
+
+    # Create keyboard for selecting hours
+    keyboard = [
+        [InlineKeyboardButton(f"{hour:02d}:00", callback_data=f"hour:{hour}")]
+        for hour in range(24)
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text("اختر الساعة:", reply_markup=reply_markup)
+
+# Step 3: Handle hour selection and prompt for minutes
+async def handle_hour_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    chat_id = query.message.chat.id
+
+    selected_hour = int(query.data.split(":")[1])
+    reminder_data[chat_id]["hour"] = selected_hour
+
+    # Create keyboard for selecting minutes
+    keyboard = [
+        [InlineKeyboardButton(f"{minute:02d} دقيقة", callback_data=f"minute:{minute}")]
+        for minute in range(0, 60, 5)  # 5-minute intervals
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text("اختر الدقائق:", reply_markup=reply_markup)
+
+# Step 4: Handle minute selection and finalize reminder
+async def handle_minute_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    chat_id = query.message.chat.id
+
+    selected_minute = int(query.data.split(":")[1])
+    reminder_data[chat_id]["minute"] = selected_minute
+
+    # Combine selected date, hour, and minute
+    reminder_time = reminder_data[chat_id]["date"].replace(
+        hour=reminder_data[chat_id]["hour"],
+        minute=selected_minute,
+        second=0,
+        microsecond=0
+    )
+    reminder_data[chat_id]["final_time"] = reminder_time
+
+    await query.edit_message_text(f"تم ضبط التذكير في {reminder_time.strftime('%Y-%m-%d %H:%M')}.")
+    print(f"Reminder set for chat {chat_id} at {reminder_time}")
+
+
 
 # دالة بدء إضافة ملاحظة جديدة
 async def add_note_handler(message, context: ContextTypes.DEFAULT_TYPE):
@@ -205,6 +262,9 @@ def start_bot():
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
+        app.add_handler(CallbackQueryHandler(handle_date_selection, pattern="^date:"))
+        app.add_handler(CallbackQueryHandler(handle_hour_selection, pattern="^hour:"))
+        app.add_handler(CallbackQueryHandler(handle_minute_selection, pattern="^minute:"))
         # app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
         print(app.handlers)
 

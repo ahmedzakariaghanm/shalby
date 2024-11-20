@@ -99,6 +99,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await query.edit_message_text("لا توجد تذكيرات سابقة.")
             await ask_for_more(query, context)
+        elif query.data == "yes_more":
+        # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
+            print("تم اختيار 'نعم'، سيتم عرض الخيارات")
+        # بعد الضغط على "نعم"، يتم عرض الخيارات مرة أخرى
+            await query.answer()  # للتأكيد على الرد
+            await show_options(query, context)  # تمرير query بدلاً من message
+        elif query.data == "no_more":
+            await update.message.reply_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
     else:
         print("خطأ: لم يكن هناك callback_query.")
 
@@ -172,14 +180,14 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("ask_more_handler")
     print(update)
     print(query)
-    # if query.data == "yes_more":
+    # elif query.data == "yes_more":
     #     # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
     #     print("تم اختيار 'نعم'، سيتم عرض الخيارات")
     #     # بعد الضغط على "نعم"، يتم عرض الخيارات مرة أخرى
     #     await query.answer()  # للتأكيد على الرد
     #     await show_options(query, context)  # تمرير query بدلاً من message
     # elif query.data == "no_more":
-    await update.message.reply_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
+    #     await update.message.reply_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
 
 def start_bot():
     try:

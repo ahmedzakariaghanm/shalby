@@ -4,7 +4,19 @@ from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandle
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import asyncio
+import os
+import sys
 
+LOCK_FILE = '/tmp/bot.lock'
+
+# Check if lock file exists
+if os.path.exists(LOCK_FILE):
+    print("Bot is already running!")
+    sys.exit()
+
+# Create lock file
+with open(LOCK_FILE, 'w') as f:
+    f.write("locked")
 # تحميل المتغيرات البيئية من ملف .env
 load_dotenv()
 
@@ -163,8 +175,6 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
-        app.run_polling(drop_pending_updates=True)
-        app = ApplicationBuilder().token(TOKEN).build()
 
         # app.initialize()
 
@@ -178,7 +188,7 @@ def start_bot():
         print("Bot is running...")
 
         # Start polling for updates
-        # app.run_polling(drop_pending_updates=True)
+        app.run_polling(drop_pending_updates=True)
 
     except Exception as e:
         # Print the exception for debugging
@@ -186,3 +196,10 @@ def start_bot():
 
 if __name__ == "__main__":
     start_bot()
+
+
+
+# Run the bot
+
+# Cleanup: remove lock file when the bot stops
+os.remove(LOCK_FILE)

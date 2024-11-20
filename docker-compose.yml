@@ -4,7 +4,9 @@ services:
     build: .
     environment:
       - TELEGRAM_BOT_TOKEN
+    scale: 1
     env_file:
       - .env
     ports:
       - "8000:8000"
+    restart: always

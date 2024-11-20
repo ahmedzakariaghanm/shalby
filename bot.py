@@ -146,7 +146,7 @@ async def show_notes_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # بدء إضافة تذكير جديد
 async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
-    chat_id = chat_id or update.message.chat_id
+    chat_id = chat_id
     user_data[chat_id] = {}
 
     today = datetime.now()

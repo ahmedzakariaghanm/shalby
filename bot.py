@@ -88,7 +88,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         elif query.data == "add_reminder":
             # بداية إضافة تذكير جديد
-            await start_reminder(query.message, context, chat_id)
+            await start_reminder(update, context, chat_id)
 
         elif query.data == "show_reminders":
             # عرض التذكيرات السابقة

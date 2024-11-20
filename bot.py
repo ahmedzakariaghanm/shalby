@@ -151,84 +151,90 @@ from telegram.ext import ContextTypes
 # Store reminders
 reminder_data = {}
 
-# Step 1: Start reminder setup
-async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
-    chat_id = chat_id or (update.message.chat_id if update.message else None)
-    if not chat_id:
-        print("Error: Chat ID is missing.")
-        return
+# # Step 1: Start reminder setup
+# async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
+#     chat_id = chat_id or (update.message.chat_id if update.message else None)
+#     if not chat_id:
+#         print("Error: Chat ID is missing.")
+#         return
 
-    today = datetime.now()
-    keyboard = [
-        [InlineKeyboardButton((today + timedelta(days=i)).strftime("%Y-%m-%d"), callback_data=f"date:{i}")]
-        for i in range(7)
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    if update.message:
-        await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
-    elif update.callback_query:
-        await update.callback_query.message.reply_text("اختر التاريخ:", reply_markup=reply_markup) 
+#     today = datetime.now()
+#     keyboard = [
+#         [InlineKeyboardButton((today + timedelta(days=i)).strftime("%Y-%m-%d"), callback_data=f"date:{i}")]
+#         for i in range(7)
+#     ]
+#     reply_markup = InlineKeyboardMarkup(keyboard)
+#     if update.message:
+#         await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+#     elif update.callback_query:
+#         await update.callback_query.message.reply_text("اختر التاريخ:", reply_markup=reply_markup) 
 
-# Step 2: Handle date selection and prompt for hour
-async def handle_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id):
     query = update.callback_query
-    chat_id = query.message.chat.id
+    # chat_id = query.message.chat.id
 
-    selected_date_offset = int(query.data.split(":")[1])
-    selected_date = datetime.now() + timedelta(days=selected_date_offset)
-    reminder_data[chat_id] = {"date": selected_date}
+    # Initialize or retrieve reminder data
+    if chat_id not in reminder_data:
+        reminder_data[chat_id] = {"stage": "date"}
 
-    # Create keyboard for selecting hours
-    keyboard = [
-        [InlineKeyboardButton(f"{hour:02d}:00", callback_data=f"hour:{hour}")]
-        for hour in range(24)
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    if update.message:
-        await update.message.reply_text("اختر الساعة:", reply_markup=reply_markup)
-    elif update.callback_query:
-        await update.callback_query.message.reply_text("اختر الساعة:", reply_markup=reply_markup) 
+    stage = reminder_data[chat_id]["stage"]
 
-# Step 3: Handle hour selection and prompt for minutes
-async def handle_hour_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    chat_id = query.message.chat.id
+    if stage == "date":
+        # Stage 1: Date Selection
+        today = datetime.now()
+        keyboard = [
+            [InlineKeyboardButton((today + timedelta(days=i)).strftime("%Y-%m-%d"), callback_data=f"date:{i}")]
+            for i in range(7)
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text("اختر التاريخ:", reply_markup=reply_markup)
+        reminder_data[chat_id]["stage"] = "hour"
 
-    selected_hour = int(query.data.split(":")[1])
-    reminder_data[chat_id]["hour"] = selected_hour
+    elif stage == "hour":
+        # Stage 2: Hour Selection
+        selected_date_offset = int(query.data.split(":")[1])
+        reminder_data[chat_id]["date"] = datetime.now() + timedelta(days=selected_date_offset)
 
-    # Create keyboard for selecting minutes
-    keyboard = [
-        [InlineKeyboardButton(f"{minute:02d} دقيقة", callback_data=f"minute:{minute}")]
-        for minute in range(0, 60, 5)  # 5-minute intervals
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    if update.message:
-        await update.message.reply_text("اختر الدقائق:", reply_markup=reply_markup)
-    elif update.callback_query:
-        await update.callback_query.message.reply_text("اختر الدقائق:", reply_markup=reply_markup) 
+        keyboard = [
+            [InlineKeyboardButton(f"{hour:02d}:00", callback_data=f"hour:{hour}")]
+            for hour in range(24)
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text("اختر الساعة:", reply_markup=reply_markup)
+        reminder_data[chat_id]["stage"] = "minute"
 
-# Step 4: Handle minute selection and finalize reminder
-async def handle_minute_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    chat_id = query.message.chat.id
+    elif stage == "minute":
+        # Stage 3: Minute Selection
+        selected_hour = int(query.data.split(":")[1])
+        reminder_data[chat_id]["hour"] = selected_hour
 
-    selected_minute = int(query.data.split(":")[1])
-    reminder_data[chat_id]["minute"] = selected_minute
+        keyboard = [
+            [InlineKeyboardButton(f"{minute:02d} دقيقة", callback_data=f"minute:{minute}")]
+            for minute in range(0, 60, 5)  # 5-minute intervals
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text("اختر الدقائق:", reply_markup=reply_markup)
+        reminder_data[chat_id]["stage"] = "finalize"
 
-    # Combine selected date, hour, and minute
-    reminder_time = reminder_data[chat_id]["date"].replace(
-        hour=reminder_data[chat_id]["hour"],
-        minute=selected_minute,
-        second=0,
-        microsecond=0
-    )
-    reminder_data[chat_id]["final_time"] = reminder_time
-    if update.message:
-        await update.message.reply_text(f"تم ضبط التذكير في {reminder_time.strftime('%Y-%m-%d %H:%M')}.")
-    elif update.callback_query:
-        await update.callback_query.message.reply_text(f"تم ضبط التذكير في {reminder_time.strftime('%Y-%m-%d %H:%M')}.") 
-    print(f"Reminder set for chat {chat_id} at {reminder_time}")
+    elif stage == "finalize":
+        # Final Stage: Confirmation
+        selected_minute = int(query.data.split(":")[1])
+        reminder_data[chat_id]["minute"] = selected_minute
+
+        final_time = reminder_data[chat_id]["date"].replace(
+            hour=reminder_data[chat_id]["hour"],
+            minute=selected_minute,
+            second=0,
+            microsecond=0
+        )
+        reminder_data[chat_id]["final_time"] = final_time
+
+        await query.edit_message_text(f"تم ضبط التذكير في {final_time.strftime('%Y-%m-%d %H:%M')}.")
+        print(f"Reminder set for chat {chat_id} at {final_time}")
+
+# Example handler
+# app.add_handler(CallbackQueryHandler(unified_reminder_selection, pattern="^date:|^hour:|^minute:"))
+
 
 
 

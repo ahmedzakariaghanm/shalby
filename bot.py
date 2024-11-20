@@ -53,6 +53,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # التحقق من نوع التحديث
     if update.callback_query:
         query = update.callback_query
+        print(f"Callback received: {query.data}")  # Add this line
+
         chat_id = query.message.chat.id  # استخدم chat.id لأننا نتعامل مع callback_query هنا
 
         if query.data == "add_note":
@@ -140,11 +142,12 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
-    await update.callback_query.answer()
 
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()  # Acknowledge the callback
+
     print("ask_more_handler")
     print(update)
     print(query)
@@ -167,6 +170,8 @@ def start_bot():
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
         app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
+        print(app.handlers)
+
 
         print("Bot is running...")
 

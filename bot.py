@@ -184,7 +184,10 @@ async def handle_date_selection(update: Update, context: ContextTypes.DEFAULT_TY
         for hour in range(24)
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text("اختر الساعة:", reply_markup=reply_markup)
+    if update.message:
+        await update.message.reply_text("اختر الساعة:", reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.message.reply_text("اختر الساعة:", reply_markup=reply_markup) 
 
 # Step 3: Handle hour selection and prompt for minutes
 async def handle_hour_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -200,7 +203,10 @@ async def handle_hour_selection(update: Update, context: ContextTypes.DEFAULT_TY
         for minute in range(0, 60, 5)  # 5-minute intervals
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text("اختر الدقائق:", reply_markup=reply_markup)
+    if update.message:
+        await update.message.reply_text("اختر الدقائق:", reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.message.reply_text("اختر الدقائق:", reply_markup=reply_markup) 
 
 # Step 4: Handle minute selection and finalize reminder
 async def handle_minute_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -218,8 +224,10 @@ async def handle_minute_selection(update: Update, context: ContextTypes.DEFAULT_
         microsecond=0
     )
     reminder_data[chat_id]["final_time"] = reminder_time
-
-    await query.edit_message_text(f"تم ضبط التذكير في {reminder_time.strftime('%Y-%m-%d %H:%M')}.")
+    if update.message:
+        await update.message.reply_text(f"تم ضبط التذكير في {reminder_time.strftime('%Y-%m-%d %H:%M')}.")
+    elif update.callback_query:
+        await update.callback_query.message.reply_text(f"تم ضبط التذكير في {reminder_time.strftime('%Y-%m-%d %H:%M')}.") 
     print(f"Reminder set for chat {chat_id} at {reminder_time}")
 
 

@@ -4,7 +4,8 @@ services:
     build: .
     environment:
       - TELEGRAM_BOT_TOKEN
-    scale: 1
+    deploy:
+      replicas: 1
     env_file:
       - .env
     ports:

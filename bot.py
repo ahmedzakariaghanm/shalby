@@ -137,7 +137,7 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("لا", callback_data="no_more")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
+    await update.callback_query.edit_message_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
     await ask_more_handler(update,context)
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):

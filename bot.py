@@ -163,6 +163,7 @@ async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
+        app.run_polling(drop_pending_updates=True)
 
         # app.initialize()
 
@@ -176,7 +177,7 @@ def start_bot():
         print("Bot is running...")
 
         # Start polling for updates
-        app.run_polling(drop_pending_updates=True)
+        # app.run_polling(drop_pending_updates=True)
 
     except Exception as e:
         # Print the exception for debugging

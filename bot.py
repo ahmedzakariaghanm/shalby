@@ -5,11 +5,25 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import sys
 import time
+
+LOCK_FILE = '/tmp/bot.lock'
+
 if not (os.getenv("IS_PRIMARY_INSTANCE") == "true"):
     print("This is not the primary instance.")
     sys.exit()
+else:
+    if os.path.exists(LOCK_FILE):
+        print("Bot is already running!")
+        sys.exit()
 
-LOCK_FILE = '/tmp/bot.lock'
+# Create lock file
+    with open(LOCK_FILE, 'w') as f:
+        print("Bot locked!")
+        f.write("locked")
+        if os.path.exists(LOCK_FILE):
+            print("yay")
+
+
 
 # Check if lock file exists
 # تحميل المتغيرات البيئية من ملف .env
@@ -190,21 +204,7 @@ def start_bot():
         print(e)
 
 if __name__ == "__main__":
-    if os.path.exists(LOCK_FILE):
-        print("Bot is already running!")
-        sys.exit()
-
-# Create lock file
-    with open(LOCK_FILE, 'w') as f:
-        print("Bot locked!")
-        f.write("locked")
-        if os.path.exists(LOCK_FILE):
-            print("yay")
-
     start_bot()
-
     # Cleanup: remove lock file when the bot stops
     os.remove(LOCK_FILE)
 
-while True:
-    time.sleep(20)

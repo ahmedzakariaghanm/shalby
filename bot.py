@@ -16,6 +16,7 @@ if os.path.exists(LOCK_FILE):
 
 # Create lock file
 with open(LOCK_FILE, 'w') as f:
+    print("Bot locked!")
     f.write("locked")
 # تحميل المتغيرات البيئية من ملف .env
 load_dotenv()

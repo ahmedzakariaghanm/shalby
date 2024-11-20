@@ -39,13 +39,12 @@ user_data = {}
 # دالة لإرسال رسالة ترحيبية عند فتح الشات
 async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
-    if chat_id not in user_data or user_data[chat_id].get("last_message") != "welcome":
-        welcome_message = f"مرحبًا {update.message.from_user.first_name}! 🎉\nكيف يمكنني مساعدتك اليوم؟"
-        await update.message.reply_text(welcome_message)
+    if chat_id not in user_data:
+        user_data[chat_id] = {"notes": []}
 
-        user_data[chat_id] = {"last_message": "welcome", "notes": []}
-
-        await show_options(update, context)
+    welcome_message = f"مرحبًا {update.message.from_user.first_name}! 🎉\nكيف يمكنني مساعدتك اليوم؟"
+    await update.message.reply_text(welcome_message)
+    await show_options(update, context)
 
 async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = (

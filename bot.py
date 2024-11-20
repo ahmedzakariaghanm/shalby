@@ -173,13 +173,13 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
 
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
-async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()  # Acknowledge the callback
+# async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     await query.answer()  # Acknowledge the callback
 
-    print("ask_more_handler")
-    print(update)
-    print(query)
+#     print("ask_more_handler")
+#     print(update)
+#     print(query)
     # elif query.data == "yes_more":
     #     # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
     #     print("تم اختيار 'نعم'، سيتم عرض الخيارات")
@@ -198,7 +198,7 @@ def start_bot():
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
-        app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
+        # app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
         print(app.handlers)
 
 

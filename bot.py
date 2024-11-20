@@ -164,6 +164,7 @@ def start_bot():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
         app.run_polling(drop_pending_updates=True)
+        app = ApplicationBuilder().token(TOKEN).build()
 
         # app.initialize()
 

@@ -3,9 +3,9 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import asyncio
-import os
 import sys
+import time
+
 
 LOCK_FILE = '/tmp/bot.lock'
 
@@ -203,3 +203,6 @@ if __name__ == "__main__":
 
     # Cleanup: remove lock file when the bot stops
     os.remove(LOCK_FILE)
+
+while True:
+    time.sleep(20)

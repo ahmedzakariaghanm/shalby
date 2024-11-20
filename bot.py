@@ -42,8 +42,10 @@ async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.message:
+        print("reply_text")
         await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
     else:
+        print("edit_message_text")
         await update.callback_query.edit_message_text("؟ماذا ترغب في فعله؟", reply_markup=reply_markup)
 
 # التعامل مع الأزرار التي يضغط عليها المستخدم

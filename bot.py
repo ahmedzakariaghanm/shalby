@@ -141,19 +141,17 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # await ask_more_handler(update,context)
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.message.reply_text
+    query = update.callback_query
     print("ask_more_handler")
-    print(update.message.text)
-    # print(query)
-    # print(query.data)
-    # if query.data == "yes_more":
-    #     # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
-    #     print("تم اختيار 'نعم'، سيتم عرض الخيارات")
-    #     # بعد الضغط على "نعم"، يتم عرض الخيارات مرة أخرى
-    #     await query.answer()  # للتأكيد على الرد
-    #     await show_options(query, context)  # تمرير query بدلاً من message
-    # elif query.data == "no_more":
-    await update.message.reply_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
+    print(update)
+    if query.data == "yes_more":
+        # هنا نضيف debug للتأكد من استدعاء الدالة بشكل صحيح
+        print("تم اختيار 'نعم'، سيتم عرض الخيارات")
+        # بعد الضغط على "نعم"، يتم عرض الخيارات مرة أخرى
+        await query.answer()  # للتأكيد على الرد
+        await show_options(query, context)  # تمرير query بدلاً من message
+    elif query.data == "no_more":
+        await update.message.reply_text("شكرًا لاستخدامك البوت. نتمنى لك يومًا سعيدًا!")
 
 def start_bot():
     try:

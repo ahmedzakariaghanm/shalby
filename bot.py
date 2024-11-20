@@ -44,7 +44,7 @@ async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message:
         await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
     else:
-        await update.callback_query.edit_message_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
+        await update.callback_query.edit_message_text("؟ماذا ترغب في فعله؟", reply_markup=reply_markup)
 
 # التعامل مع الأزرار التي يضغط عليها المستخدم
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -57,6 +57,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # بداية إضافة ملاحظة جديدة
             user_data[chat_id]["adding_note"] = True
             await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
+            await save_note_handler(update,context)
+            await ask_for_more(query, context)
 
         elif query.data == "show_notes":
             # عرض الملاحظات السابقة
@@ -137,8 +139,7 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("لا", callback_data="no_more")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
-    # await ask_more_handler(update,context)
+    await update.message.reply_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -162,7 +163,7 @@ def start_bot():
 
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
-        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
+        # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
         app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
 
         print("Bot is running...")

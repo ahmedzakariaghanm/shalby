@@ -10,14 +10,6 @@ import sys
 LOCK_FILE = '/tmp/bot.lock'
 
 # Check if lock file exists
-if os.path.exists(LOCK_FILE):
-    print("Bot is already running!")
-    sys.exit()
-
-# Create lock file
-with open(LOCK_FILE, 'w') as f:
-    print("Bot locked!")
-    f.write("locked")
 # تحميل المتغيرات البيئية من ملف .env
 load_dotenv()
 
@@ -196,7 +188,18 @@ def start_bot():
         print(e)
 
 if __name__ == "__main__":
+    if os.path.exists(LOCK_FILE):
+        print("Bot is already running!")
+        sys.exit()
+
+# Create lock file
+    with open(LOCK_FILE, 'w') as f:
+        print("Bot locked!")
+        f.write("locked")
+        if os.path.exists(LOCK_FILE):
+            print("yay")
+
     start_bot()
 
-# Cleanup: remove lock file when the bot stops
-os.remove(LOCK_FILE)
+    # Cleanup: remove lock file when the bot stops
+    os.remove(LOCK_FILE)

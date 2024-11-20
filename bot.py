@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import sys
 import time
-
+if not (os.getenv("IS_PRIMARY_INSTANCE") == "true"):
+    print("This is not the primary instance.")
+    sys.exit()
 
 LOCK_FILE = '/tmp/bot.lock'
 

@@ -57,7 +57,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # بداية إضافة ملاحظة جديدة
             user_data[chat_id]["adding_note"] = True
             await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
-            await save_note_handler(update,context)
+            await save_note_handler(query,context)
             await ask_for_more(query, context)
 
         elif query.data == "show_notes":

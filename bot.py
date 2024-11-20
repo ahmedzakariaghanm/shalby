@@ -164,7 +164,10 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
         for i in range(7)
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+    if update.message:
+        await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.message.reply_text("اختر التاريخ:", reply_markup=reply_markup) 
 
 # Step 2: Handle date selection and prompt for hour
 async def handle_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -140,10 +140,11 @@ async def ask_for_more(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("هل تحتاج شيئًا آخر؟", reply_markup=reply_markup)
+    await update.answer()
+
 # التعامل مع اختيار المستخدم بعد انتهاء المهمة
 async def ask_more_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer() 
     print("ask_more_handler")
     print(update)
     print(query)
@@ -165,7 +166,7 @@ def start_bot():
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
-        app.add_handler(CallbackQueryHandler(ask_more_handler))
+        app.add_handler(CallbackQueryHandler(ask_more_handler, pattern="yes_more|no_more"))
 
         print("Bot is running...")
 

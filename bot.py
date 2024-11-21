@@ -239,7 +239,7 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reminder_data[chat_id]["final_time"] = final_time
 
         await query.edit_message_text(f"تم ضبط التذكير في {final_time.strftime('%Y-%m-%d %H:%M')}.")
-        await ask_for_more(update, context)
+        await ask_for_more(query, context)
         print(f"Reminder set for chat {chat_id} at {final_time}")
 
 # Example handler

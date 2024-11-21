@@ -279,6 +279,8 @@ def start_bot():
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(button_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
+        app.add_handler(CallbackQueryHandler(start_reminder, pattern="^date:|^hour:|^minute:"))
+
         # app.add_handler(CallbackQueryHandler(handle_date_selection, pattern="^date:"))
         # app.add_handler(CallbackQueryHandler(handle_hour_selection, pattern="^hour:"))
         # app.add_handler(CallbackQueryHandler(handle_minute_selection, pattern="^minute:"))

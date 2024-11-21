@@ -81,7 +81,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # بداية إضافة ملاحظة جديدة
             user_data[chat_id]["adding_note"] = True
             await query.edit_message_text("أرسل لي النص الذي ترغب في حفظه كملاحظة.")
-            # await save_note_handler(query,context)
+            await save_note_handler(query,context)
         elif query.data == "show_notes":
             # عرض الملاحظات السابقة
             await show_notes_handler(update, context)
@@ -289,7 +289,8 @@ def start_bot():
         app.add_handler(CommandHandler('start', welcome_user))
         app.add_handler(CallbackQueryHandler(start_reminder, pattern="^date:|^hour:|^minute:"))
         app.add_handler(CallbackQueryHandler(button_handler))
-        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
+
+        # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
 
         # app.add_handler(CallbackQueryHandler(handle_date_selection, pattern="^date:"))
         # app.add_handler(CallbackQueryHandler(handle_hour_selection, pattern="^hour:"))

@@ -33,7 +33,7 @@ load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # تخزين البيانات
-reminders = {}
+reminder_data = {}
 user_data = {}
 
 # دالة لإرسال رسالة ترحيبية عند فتح الشات
@@ -57,7 +57,7 @@ async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_data[chat_id].get("notes"):
         keyboard.append([InlineKeyboardButton("عرض الملاحظات السابقة", callback_data="show_notes")])
     keyboard.append([InlineKeyboardButton("إضافة تذكير جديد", callback_data="add_reminder")])
-    if chat_id in reminders:
+    if chat_id in reminder_data:
         keyboard.append([InlineKeyboardButton("عرض التذكيرات السابقة", callback_data="show_reminders")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -88,12 +88,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         elif query.data == "add_reminder":
             # بداية إضافة تذكير جديد
-            await start_reminder(update, context, chat_id)
+            await start_reminder(update, context)
 
         elif query.data == "show_reminders":
             # عرض التذكيرات السابقة
-            if chat_id in reminders:
-                reminder = reminders[chat_id]
+            if chat_id in reminder_data:
+                reminder = reminder_data[chat_id]
                 await query.edit_message_text(f"التذكير: {reminder['description']} في {reminder['time']}")
             else:
                 await query.edit_message_text("لا توجد تذكيرات سابقة.")
@@ -149,7 +149,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 # Store reminders
-reminder_data = {}
+# reminder_data = {}
 
 # # Step 1: Start reminder setup
 # async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):

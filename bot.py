@@ -66,7 +66,7 @@ async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
     else:
         print("edit_message_text")
-        await update.callback_query.edit_message_text("؟ماذا ترغب في فعله؟", reply_markup=reply_markup)
+        await update.callback_query.edit_message_text("ماذا ترغب في فعله؟", reply_markup=reply_markup)
 
 # التعامل مع الأزرار التي يضغط عليها المستخدم
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -187,8 +187,11 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
             for i in range(7)
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("اختر التاريخ:", reply_markup=reply_markup)
         reminder_data[chat_id]["stage"] = "hour"
+        if update.message:
+            await update.message.reply_text("اختر التاريخ:", reply_markup=reply_markup)
+        else:
+            await update.callback_query.edit_message_text("اختر التاريخ:", reply_markup=reply_markup)
 
     elif stage == "hour":
         # Stage 2: Hour Selection
@@ -200,8 +203,11 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
             for hour in range(24)
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("اختر الساعة:", reply_markup=reply_markup)
         reminder_data[chat_id]["stage"] = "minute"
+        if update.message:
+            await update.message.reply_text("اختر الساعة:", reply_markup=reply_markup)
+        else:
+            await update.callback_query.edit_message_text("اختر الساعة:", reply_markup=reply_markup)
 
     elif stage == "minute":
         # Stage 3: Minute Selection
@@ -213,8 +219,11 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, cha
             for minute in range(0, 60, 5)  # 5-minute intervals
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("اختر الدقائق:", reply_markup=reply_markup)
         reminder_data[chat_id]["stage"] = "finalize"
+        if update.message:
+            await update.message.reply_text("اختر الدقائق:", reply_markup=reply_markup)
+        else:
+            await update.callback_query.edit_message_text("اختر الدقائق:", reply_markup=reply_markup)
 
     elif stage == "finalize":
         # Final Stage: Confirmation

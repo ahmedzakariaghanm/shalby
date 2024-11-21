@@ -169,9 +169,9 @@ reminder_data = {}
 #     elif update.callback_query:
 #         await update.callback_query.message.reply_text("اختر التاريخ:", reply_markup=reply_markup) 
 
-async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id):
+async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    # chat_id = query.message.chat.id
+    chat_id = query.message.chat.id
 
     # Initialize or retrieve reminder data
     if chat_id not in reminder_data:

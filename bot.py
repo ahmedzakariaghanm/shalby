@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import sys
 import time
-
+from datetime import datetime, timedelta
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 LOCK_FILE = '/tmp/bot.lock'
 
 if not (os.getenv("IS_PRIMARY_INSTANCE") == "true"):
@@ -145,9 +147,7 @@ async def show_notes_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.edit_message_text("لا توجد ملاحظات سابقة.")
     await ask_for_more(query, context)
 
-from datetime import datetime, timedelta
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
+
 
 # Store reminders
 # reminder_data = {}
@@ -226,28 +226,57 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.callback_query.edit_message_text("اختر الدقائق:", reply_markup=reply_markup)
 
-    elif stage == "finalize":
-        # Final Stage: Confirmation
+    elif stage == "description":
+        # Stage 4: Add Description
         selected_minute = int(query.data.split(":")[1])
         reminder_data[chat_id]["minute"] = selected_minute
+        reminder_data[chat_id]["stage"] = "finalize"
+        await query.edit_message_text("أرسل لي وصفًا للتذكير.")
+        await query.answer()  # للتأكيد على الرد
 
-        final_time = reminder_data[chat_id]["date"].replace(
-            hour=reminder_data[chat_id]["hour"],
-            minute=selected_minute,
-            second=0,
-            microsecond=0
-        )
-        reminder_data[chat_id]["final_time"] = final_time
+    elif stage == "finalize":
+        # Final Stage: Confirmation
+        if update.message and update.message.text:
+            reminder_data[chat_id]["description"] = update.message.text
 
-        await query.edit_message_text(f"تم ضبط التذكير في {final_time.strftime('%Y-%m-%d %H:%M')}.")
-        await ask_for_more(query, context)
-        print(f"Reminder set for chat {chat_id} at {final_time}")
+            final_time = reminder_data[chat_id]["date"].replace(
+                hour=reminder_data[chat_id]["hour"],
+                minute=reminder_data[chat_id]["minute"],
+                second=0,
+                microsecond=0
+            )
+            reminder_data[chat_id]["final_time"] = final_time
+
+            await update.message.reply_text(
+                f"تم ضبط التذكير في {final_time.strftime('%Y-%m-%d %H:%M')} بوصف: {reminder_data[chat_id]['description']}."
+            )
+            print(f"Reminder set for chat {chat_id} at {final_time} with description: {reminder_data[chat_id]['description']}")
 
 # Example handler
 # app.add_handler(CallbackQueryHandler(unified_reminder_selection, pattern="^date:|^hour:|^minute:"))
+# async def save_description_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     chat_id = update.message.chat.id
+
+#     if chat_id in reminder_data and reminder_data[chat_id].get("stage") == "finalize":
+#         reminder_data[chat_id]["description"] = update.message.text
+
+#         final_time = reminder_data[chat_id]["date"].replace(
+#             hour=reminder_data[chat_id]["hour"],
+#             minute=reminder_data[chat_id]["minute"],
+#             second=0,
+#             microsecond=0
+#         )
+#         reminder_data[chat_id]["final_time"] = final_time
+
+#         await update.message.reply_text(
+#             f"تم ضبط التذكير في {final_time.strftime('%Y-%m-%d %H:%M')} بوصف: {reminder_data[chat_id]['description']}."
+#         )
 
 
-
+# async def process_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     chat_id = update.message.chat.id
+#     if reminder_data[chat_id]["stage"] == "description":
+#         await start_reminder(update, context)  # Continue to finalize stage
 
 # دالة بدء إضافة ملاحظة جديدة
 # async def add_note_handler(message, context: ContextTypes.DEFAULT_TYPE):
@@ -292,6 +321,7 @@ def start_bot():
         app.add_handler(CallbackQueryHandler(button_handler))
 
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_note_handler))
+        # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, process_description))
 
         # app.add_handler(CallbackQueryHandler(handle_date_selection, pattern="^date:"))
         # app.add_handler(CallbackQueryHandler(handle_hour_selection, pattern="^hour:"))

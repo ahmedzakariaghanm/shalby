@@ -45,7 +45,7 @@ async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data[chat_id] = {"notes": []}
 
     welcome_message = f"مرحبًا {update.message.from_user.first_name}! 🎉\nكيف يمكنني مساعدتك اليوم؟"
-    await update.message.reply_text(welcome_message)
+    await update.message.reply_text(chat_id)
     await show_options(update, context)
 
 async def show_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
